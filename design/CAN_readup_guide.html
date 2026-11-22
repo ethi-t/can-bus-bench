@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAN read-up guide</title>
+<style>
+:root{
+  --bg:#fbfaf7;--surface:#ffffff;--text:#1f1e1c;--muted:#5f5e5a;--line:#d3d1c7;
+  --accent:#534AB7;--accent-bg:#EEEDFE;--teal:#0F6E56;--teal-bg:#E1F5EE;
+  --h:#D85A30;--l:#378ADD;--d:#1D9E75;--focus:#854F0B;--focus-bg:#FAEEDA;
+  --skip:#888780;--gray-bg:#F1EFE8;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1c1b19;--surface:#262522;--text:#ecebe6;--muted:#b4b2a9;--line:#444441;
+  --accent:#AFA9EC;--accent-bg:#26215C;--teal:#9FE1CB;--teal-bg:#04342C;
+  --h:#F0997B;--l:#85B7EB;--d:#5DCAA5;--focus:#FAC775;--focus-bg:#412402;
+  --skip:#888780;--gray-bg:#2C2C2A;}}
+:root[data-theme="dark"]{
+  --bg:#1c1b19;--surface:#262522;--text:#ecebe6;--muted:#b4b2a9;--line:#444441;
+  --accent:#AFA9EC;--accent-bg:#26215C;--teal:#9FE1CB;--teal-bg:#04342C;
+  --h:#F0997B;--l:#85B7EB;--d:#5DCAA5;--focus:#FAC775;--focus-bg:#412402;
+  --skip:#888780;--gray-bg:#2C2C2A;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:820px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:28px;font-weight:600;margin:0 0 4px}
+h2{font-size:21px;font-weight:600;margin:48px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:17px;font-weight:600;margin:24px 0 4px}
+.sub{color:var(--muted);margin:0 0 24px}
+a{color:var(--accent)}
+code{font-family:Consolas,monospace;font-size:.92em;background:var(--gray-bg);padding:1px 5px;border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:12px 0}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:10px;white-space:nowrap}
+.tag.focus{background:var(--focus-bg);color:var(--focus)}
+.tag.skim{background:var(--accent-bg);color:var(--accent)}
+.tag.skip{background:var(--gray-bg);color:var(--skip)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:16px 0}
+.key{border-left:4px solid var(--focus);background:var(--focus-bg);padding:10px 16px;margin:16px 0}
+.key p{margin:0}
+.paper{font-size:14px;color:var(--muted);margin:4px 0 0}
+.paper b{color:var(--focus)}
+figure{margin:16px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text)}
+svg .ts{font-size:12px;fill:var(--muted)}
+svg .t{font-size:14px}
+svg .th{font-size:14px;font-weight:600}
+svg .bxp{fill:var(--accent-bg);stroke:var(--accent);stroke-width:.8}
+svg .bxt{fill:var(--teal-bg);stroke:var(--teal);stroke-width:.8}
+svg .bxg{fill:var(--gray-bg);stroke:var(--line);stroke-width:.8}
+svg .bxf{fill:var(--focus-bg);stroke:var(--focus);stroke-width:1.2}
+svg .ln{stroke:var(--muted);fill:none}
+ol.q li,ul li{margin:4px 0}
+.toc{columns:2;font-size:15px}
+@media (max-width:600px){.toc{columns:1}}
+</style>
+</head>
+<body>
+<main>
+
+<h1>CAN read-up guide</h1>
+<p class="sub">Project 1 (CAN_bus), milestone M1. Plain-English explanations and diagrams, with a map of which parts of the TI paper and the ESP-IDF page to read closely. Written 2026-11-18.</p>
+
+<div class="box">
+<b>How to use this</b>
+<ol>
+<li>Read each section of this guide first. It gives you the picture.</li>
+<li>Then read the paper sections marked <span class="tag focus">Focus</span> in the reading map. The "In the paper" line under each heading tells you exactly where.</li>
+<li>Try the check questions at the end of each section.</li>
+<li>Last, write your own answers to the 6 questions in <code>notes.md</code>. This guide gives you the material, not the answers.</li>
+</ol>
+<p class="paper">The paper itself isn't copied in here: it's TI's copyrighted document. Open it alongside this guide:
+<a href="https://www.ti.com/lit/an/sloa101b/sloa101b.pdf">TI SLOA101B, Introduction to the Controller Area Network (CAN)</a> (16 pages) and
+<a href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/twai.html">ESP-IDF: Two-Wire Automotive Interface (TWAI)</a>.</p>
+</div>
+
+<div class="toc">
+<ol>
+<li><a href="#map">Reading map</a></li>
+<li><a href="#big">The big picture</a></li>
+<li><a href="#term">Wiring and termination</a></li>
+<li><a href="#volt">Voltages and noise</a></li>
+<li><a href="#frame">What a message looks like</a></li>
+<li><a href="#arb">Arbitration</a></li>
+<li><a href="#ack">ACK and errors</a></li>
+<li><a href="#stuff">Bit stuffing</a></li>
+<li><a href="#esp">Your ESP32 hardware</a></li>
+<li><a href="#qmap">Where each question is covered</a></li>
+<li><a href="#gloss">Glossary</a></li>
+</ol>
+</div>
+
+<h2 id="map">1. Reading map: TI SLOA101B</h2>
+<p>The paper is 16 pages, but only about 6 pages matter for your questions. Page numbers are the ones printed at the bottom of each page.</p>
+<table>
+<tr><th>Paper section</th><th>Pages</th><th>Priority</th><th>Why</th></tr>
+<tr><td>1 Introduction</td><td>2</td><td><span class="tag skim">Skim</span></td><td>What CAN is for; broadcast, no master</td></tr>
+<tr><td>2 The CAN Standard (Fig 1)</td><td>2–3</td><td><span class="tag skim">Skim</span></td><td>Controller = data-link layer, transceiver = physical layer (Q6)</td></tr>
+<tr><td>3, 3.1.1 Standard CAN bit fields (Fig 2)</td><td>3</td><td><span class="tag focus">Focus</span></td><td>Every field of the frame (Q3, bonus)</td></tr>
+<tr><td>3.1.2 Extended CAN (Fig 3)</td><td>4</td><td><span class="tag skip">Skip</span></td><td>29-bit IDs, not needed yet</td></tr>
+<tr><td>4.1 Arbitration (Figs 4, 5)</td><td>4–5</td><td><span class="tag focus">Focus</span></td><td>Inverted logic, who wins and why nothing is corrupted (Q4)</td></tr>
+<tr><td>4.2 Message types</td><td>5–6</td><td><span class="tag skim">Skim</span></td><td>Read 4.2.1 data frame and 4.2.3 error frame; skip remote/overload</td></tr>
+<tr><td>4.3 A valid frame, 4.4 Error checking</td><td>6–7</td><td><span class="tag focus">Focus</span></td><td>The ACK and bit-stuffing paragraphs (Q5, bonus)</td></tr>
+<tr><td>5 The CAN Bus (Figs 6–9)</td><td>7–9</td><td><span class="tag focus">Focus</span></td><td>Differential signalling, 120 Ω termination, bus voltages (Q1, Q2, Q6)</td></tr>
+<tr><td>5.1.4 Common-mode noise rejection (Fig 11)</td><td>11</td><td><span class="tag focus">Focus</span></td><td>Short; why noise on both wires cancels (Q1)</td></tr>
+<tr><td>Rest of 5.1, 5.2, 6, 7</td><td>10–16</td><td><span class="tag skip">Skip</span></td><td>Transceiver features and part selection; come back later</td></tr>
+</table>
+<p><b>ESP-IDF TWAI page:</b> <span class="tag focus">Focus</span> Overview and Getting Started → Hardware Connection. <span class="tag skim">Skim</span> Advanced Features → Bus Errors and Recovery. <span class="tag skip">Skip</span> everything else (API details) until you write code.</p>
+
+<div class="key"><p><b>Two small slips in the paper</b> (so they don't confuse you): it calls the gap after a frame a 7-bit "IFS", but the standard's intermission is 3 bits. It also describes the CRC loosely as a count of bits. It's actually a 15-bit check value calculated from the frame's bits, which the receiver recalculates and compares.</p></div>
+
+<h2 id="big">2. The big picture</h2>
+<p class="paper"><b>In the paper:</b> §1 (p2), §2 Fig 1 (p2), §5 Fig 6 (p7)</p>
+<p>CAN lets many small computers (<em>nodes</em>) share one pair of wires: motor controllers, sensors, your ESP32. Nobody is in charge. Any node can talk, and every node hears every message. A message carries a label (the <em>identifier</em>) saying what it is, such as "motor current" or "battery voltage", not who it's for. Each node decides for itself whether it cares. That's why cars, robots and drones use it: you can add a node without rewiring anything else.</p>
+<p>Every node has two parts:</p>
+<ul>
+<li><b>Controller</b>: the brain. It builds and reads messages, checks for errors and handles arbitration. It works with ordinary logic signals on two pins: TX (out) and RX (in). On your board it's the TWAI peripheral inside the ESP32.</li>
+<li><b>Transceiver</b>: the translator. It converts the controller's TX logic into the two-wire bus voltages, and converts the bus back into RX logic. On your board it's the SN65HVD230 module.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 680 360" role="img" aria-label="Three nodes, each controller linked to a transceiver by TX and RX, connected to CAN-H and CAN-L, with a 120 ohm resistor at each end">
+<rect class="bxp" x="115" y="30" width="130" height="56" rx="8"/><text class="th" x="180" y="52" text-anchor="middle">ESP32</text><text class="ts" x="180" y="72" text-anchor="middle">TWAI controller</text>
+<rect class="bxp" x="275" y="30" width="130" height="56" rx="8"/><text class="th" x="340" y="52" text-anchor="middle">Node 2</text><text class="ts" x="340" y="72" text-anchor="middle">Controller</text>
+<rect class="bxp" x="435" y="30" width="130" height="56" rx="8"/><text class="th" x="500" y="52" text-anchor="middle">Node 3</text><text class="ts" x="500" y="72" text-anchor="middle">Controller</text>
+<rect class="bxt" x="115" y="140" width="130" height="56" rx="8"/><text class="th" x="180" y="162" text-anchor="middle">Transceiver</text><text class="ts" x="180" y="182" text-anchor="middle">SN65HVD230</text>
+<rect class="bxt" x="275" y="140" width="130" height="56" rx="8"/><text class="th" x="340" y="172" text-anchor="middle">Transceiver</text>
+<rect class="bxt" x="435" y="140" width="130" height="56" rx="8"/><text class="th" x="500" y="172" text-anchor="middle">Transceiver</text>
+<g class="ln" stroke-width="1.2">
+<path d="M165 88V136M161 130L165 137L169 130"/><path d="M195 138V90M191 96L195 89L199 96"/>
+<path d="M325 88V136M321 130L325 137L329 130"/><path d="M355 138V90M351 96L355 89L359 96"/>
+<path d="M485 88V136M481 130L485 137L489 130"/><path d="M515 138V90M511 96L515 89L519 96"/>
+</g>
+<text class="ts" x="158" y="117" text-anchor="end">TX</text><text class="ts" x="202" y="117">RX</text>
+<line x1="70" y1="240" x2="610" y2="240" stroke="var(--h)" stroke-width="2"/>
+<line x1="70" y1="300" x2="610" y2="300" stroke="var(--l)" stroke-width="2" stroke-dasharray="6 4"/>
+<text class="th" x="618" y="245">CAN-H</text><text class="th" x="618" y="305">CAN-L</text>
+<g fill="none" stroke-width="1.5">
+<path d="M165 196V240" stroke="var(--h)"/><path d="M195 196V300" stroke="var(--l)" stroke-dasharray="4 3"/>
+<path d="M325 196V240" stroke="var(--h)"/><path d="M355 196V300" stroke="var(--l)" stroke-dasharray="4 3"/>
+<path d="M485 196V240" stroke="var(--h)"/><path d="M515 196V300" stroke="var(--l)" stroke-dasharray="4 3"/>
+</g>
+<g fill="var(--muted)"><circle cx="165" cy="240" r="3"/><circle cx="195" cy="300" r="3"/><circle cx="325" cy="240" r="3"/><circle cx="355" cy="300" r="3"/><circle cx="485" cy="240" r="3"/><circle cx="515" cy="300" r="3"/><circle cx="70" cy="240" r="3"/><circle cx="70" cy="300" r="3"/><circle cx="600" cy="240" r="3"/><circle cx="600" cy="300" r="3"/></g>
+<g class="ln" stroke-width="1"><path d="M70 240V254M70 286V300M600 240V254M600 286V300"/><rect x="63" y="254" width="14" height="32"/><rect x="593" y="254" width="14" height="32"/></g>
+<text class="ts" x="86" y="274">120 Ω</text><text class="ts" x="584" y="274" text-anchor="end">120 Ω</text>
+<text class="ts" x="340" y="335" text-anchor="middle">Twisted pair; terminators only at the two physical ends</text>
+</svg>
+<figcaption>Same idea as the paper's Fig 6. Each node: controller (logic TX/RX) → transceiver → the shared two-wire bus.</figcaption>
+</figure>
+
+<h3>Check yourself</h3>
+<ol class="q"><li>If you unplugged node 2, would nodes 1 and 3 still be able to talk? Why?</li></ol>
+
+<h2 id="term">3. Wiring and termination</h2>
+<p class="paper"><b>In the paper:</b> §5 (p7), the paragraph after Fig 6 on the 120 Ω cable and termination</p>
+<p>At CAN speeds (up to 1 Mbit/s) a long wire doesn't behave like a simple conductor. It behaves like a <b>transmission line</b>: each voltage step travels along the cable as a wave. When the wave hits an open end, part of it bounces back, like an echo in a corridor, and the echoes smear into the next bits.</p>
+<p>Twisted-pair CAN cable has a <b>characteristic impedance</b> Z<sub>0</sub> ≈ 120 Ω. That's the ratio of voltage to current the wave "sees" as it travels, set by the cable's geometry, not its length. If the end of the line is a resistor equal to Z<sub>0</sub>, the wave can't tell the cable has ended. Its energy goes into the resistor as heat and nothing reflects.</p>
+<ul>
+<li>One 120 Ω resistor at <b>each physical end</b>, so there are exactly two on the whole bus.</li>
+<li>Not one per node. The standard says not to put the terminator <em>on</em> a node, because unplugging that node would remove the termination.</li>
+<li>Keep the stubs (the short branches from bus to node) short: the paper gives 0.3 m maximum. The ISO 11898 headline numbers are 1 Mbit/s, 40 m and 30 nodes.</li>
+<li>The two resistors also do a DC job: when no transceiver is driving, they pull CAN-H and CAN-L to the same voltage, which is the recessive state.</li>
+</ul>
+<div class="key"><p><b>Multimeter tip:</b> with the power off, the meter across CAN-H and CAN-L sees every termination resistor on the bus at once. The transceivers are effectively open circuits when unpowered. Work out what a correctly terminated bus should read; that's Q2.</p></div>
+<h3>Check yourself</h3>
+<ol class="q"><li>What would the meter read if one terminator were missing? And with three (an extra one on a middle node)?</li></ol>
+
+<h2 id="volt">4. Voltages and noise: recessive and dominant</h2>
+<p class="paper"><b>In the paper:</b> §5 p7 (voltage levels), Fig 7 (p8), §5.1.4 Fig 11 (p11), §4.1 Fig 4 (p4) for the inverted logic</p>
+<p>The bus has only two states:</p>
+<table>
+<tr><th>State</th><th>Logic</th><th>CAN-H</th><th>CAN-L</th><th>H − L</th><th>Who causes it</th></tr>
+<tr><td>Recessive</td><td>1</td><td>≈ 2.5 V</td><td>≈ 2.5 V</td><td>≈ 0 V</td><td>Nobody. It's the resting state the resistors pull to.</td></tr>
+<tr><td>Dominant</td><td>0</td><td>≈ 3.5 V</td><td>≈ 1.5 V</td><td>≈ 2 V</td><td>Any transceiver actively driving</td></tr>
+</table>
+<p>These are the paper's numbers for 5 V transceivers. Your 3.3 V SN65HVD230 sits a bit lower, but the pattern and the roughly 2 V difference are the same. Note the "inverted" feel: logic 0 is the <em>active</em> state (paper Fig 4).</p>
+<p>The receiver ignores the absolute voltages and looks only at the <b>difference</b> H − L. Interference from a motor, an ESC or a radio couples onto both wires of a twisted pair almost equally, because they run so close together and the twist swaps their positions every few millimetres. A disturbance that's the same on both wires is called <b>common-mode</b>, and subtraction cancels it. The paper adds a second benefit: equal and opposite currents in the two wires mean their magnetic fields mostly cancel, so the bus also <em>emits</em> very little noise. That's the EMC link to MBDA.</p>
+
+<figure>
+<svg viewBox="0 0 680 480" role="img" aria-label="CAN-H and CAN-L voltages over six bits with a noise spike that cancels in the difference">
+<g stroke="var(--line)" stroke-width="0.8" stroke-dasharray="3 4"><line x1="200" y1="50" x2="200" y2="420"/><line x1="280" y1="50" x2="280" y2="420"/><line x1="360" y1="50" x2="360" y2="420"/><line x1="440" y1="50" x2="440" y2="420"/><line x1="520" y1="50" x2="520" y2="420"/></g>
+<g text-anchor="middle"><text class="th" x="160" y="50">1</text><text class="ts" x="160" y="68">recessive</text><text class="th" x="240" y="50">0</text><text class="ts" x="240" y="68">dominant</text><text class="th" x="320" y="50">0</text><text class="ts" x="320" y="68">dominant</text><text class="th" x="400" y="50">1</text><text class="ts" x="400" y="68">recessive</text><text class="th" x="480" y="50">0</text><text class="ts" x="480" y="68">dominant</text><text class="th" x="560" y="50">1</text><text class="ts" x="560" y="68">recessive</text></g>
+<g text-anchor="end"><text class="ts" x="108" y="129">3.5 V</text><text class="ts" x="108" y="179">2.5 V</text><text class="ts" x="108" y="229">1.5 V</text><text class="ts" x="108" y="354">2 V</text><text class="ts" x="108" y="414">0 V</text></g>
+<path d="M120 175H200V125H360V175H390L395 145H405L410 175H440V125H520V175H600" fill="none" stroke="var(--h)" stroke-width="2"/>
+<path d="M120 175H200V225H360V175H390L395 145H405L410 175H440V225H520V175H600" fill="none" stroke="var(--l)" stroke-width="2" stroke-dasharray="6 4"/>
+<text class="ts" x="400" y="102" text-anchor="middle">noise hits both</text>
+<line x1="120" y1="300" x2="600" y2="300" stroke="var(--line)" stroke-width="0.8"/>
+<path d="M120 410H200V350H360V410H440V350H520V410H600" fill="none" stroke="var(--d)" stroke-width="2"/>
+<text class="ts" x="400" y="392" text-anchor="middle">no spike here</text>
+<line x1="130" y1="455" x2="160" y2="455" stroke="var(--h)" stroke-width="2"/><text class="ts" x="168" y="459">CAN-H</text>
+<line x1="250" y1="455" x2="280" y2="455" stroke="var(--l)" stroke-width="2" stroke-dasharray="6 4"/><text class="ts" x="288" y="459">CAN-L</text>
+<line x1="370" y1="455" x2="400" y2="455" stroke="var(--d)" stroke-width="2"/><text class="ts" x="408" y="459">H − L (what the receiver uses)</text>
+</svg>
+<figcaption>A 0.6 V spike lifts both wires equally in bit 4. Subtracting cancels it, so the receiver still reads recessive.</figcaption>
+</figure>
+
+<div class="key"><p><b>The rule that makes everything else work:</b> dominant always beats recessive. If one node drives dominant while others leave the bus alone, the bus <em>is</em> dominant. A 0 overwrites a 1. Arbitration and ACK both rely on this.</p></div>
+<h3>Check yourself</h3>
+<ol class="q">
+<li>A 1 V spike lands on both wires during a dominant bit. What are CAN-H, CAN-L and H − L during the spike?</li>
+<li>Why would running CAN-H and CAN-L as two separate, untwisted wires a few centimetres apart make noise rejection worse?</li>
+</ol>
+
+<h2 id="frame">5. What a message looks like: the standard data frame</h2>
+<p class="paper"><b>In the paper:</b> §3.1.1 Fig 2 and the bullet list under it (p3), §4.2.1 (p6)</p>
+<figure>
+<svg viewBox="0 0 680 180" role="img" aria-label="Standard CAN data frame fields from SOF to IFS with bit counts">
+<path class="ln" d="M72 52V46H198V52M202 52V46H320V52"/>
+<text class="ts" x="135" y="38" text-anchor="middle">arbitration field</text>
+<text class="ts" x="261" y="38" text-anchor="middle">control field</text>
+<rect class="bxg" x="30" y="60" width="40" height="50"/><text class="th" x="50" y="82" text-anchor="middle">SOF</text><text class="ts" x="50" y="100" text-anchor="middle">1</text>
+<rect class="bxf" x="70" y="60" width="90" height="50"/><text class="th" x="115" y="82" text-anchor="middle">Identifier</text><text class="ts" x="115" y="100" text-anchor="middle">11</text>
+<rect class="bxp" x="160" y="60" width="40" height="50"/><text class="th" x="180" y="82" text-anchor="middle">RTR</text><text class="ts" x="180" y="100" text-anchor="middle">1</text>
+<rect class="bxg" x="200" y="60" width="38" height="50"/><text class="th" x="219" y="82" text-anchor="middle">IDE</text><text class="ts" x="219" y="100" text-anchor="middle">1</text>
+<rect class="bxg" x="238" y="60" width="34" height="50"/><text class="th" x="255" y="82" text-anchor="middle">r0</text><text class="ts" x="255" y="100" text-anchor="middle">1</text>
+<rect class="bxg" x="272" y="60" width="50" height="50"/><text class="th" x="297" y="82" text-anchor="middle">DLC</text><text class="ts" x="297" y="100" text-anchor="middle">4</text>
+<rect class="bxg" x="322" y="60" width="100" height="50"/><text class="th" x="372" y="82" text-anchor="middle">Data</text><text class="ts" x="372" y="100" text-anchor="middle">0–64</text>
+<rect class="bxg" x="422" y="60" width="70" height="50"/><text class="th" x="457" y="82" text-anchor="middle">CRC</text><text class="ts" x="457" y="100" text-anchor="middle">15 + 1</text>
+<rect class="bxt" x="492" y="60" width="60" height="50"/><text class="th" x="522" y="82" text-anchor="middle">ACK</text><text class="ts" x="522" y="100" text-anchor="middle">1 + 1</text>
+<rect class="bxg" x="552" y="60" width="52" height="50"/><text class="th" x="578" y="82" text-anchor="middle">EOF</text><text class="ts" x="578" y="100" text-anchor="middle">7</text>
+<rect class="bxg" x="604" y="60" width="46" height="50"/><text class="th" x="627" y="82" text-anchor="middle">IFS</text><text class="ts" x="627" y="100" text-anchor="middle">3</text>
+<text class="ts" x="115" y="135" text-anchor="middle">priority:</text><text class="ts" x="115" y="152" text-anchor="middle">lower ID wins</text>
+<text class="ts" x="372" y="135" text-anchor="middle">0–8 bytes</text>
+<text class="ts" x="522" y="135" text-anchor="middle">receivers</text><text class="ts" x="522" y="152" text-anchor="middle">write a 0 here</text>
+</svg>
+<figcaption>Numbers are bit counts. Sent left to right, identifier MSB first. "15 + 1" and "1 + 1" mean a field plus a 1-bit recessive delimiter.</figcaption>
+</figure>
+<table>
+<tr><th>Field</th><th>Bits</th><th>Plain-English job</th></tr>
+<tr><td>SOF (start of frame)</td><td>1</td><td>A single dominant bit: "a message starts now". Every node syncs its bit timing to this edge.</td></tr>
+<tr><td>Identifier</td><td>11</td><td>What the message is about. Also its <b>priority</b>: the lower the number, the higher the priority.</td></tr>
+<tr><td>RTR</td><td>1</td><td>Dominant (0) = data frame. Recessive (1) = remote frame ("please send me this data").</td></tr>
+<tr><td>IDE</td><td>1</td><td>Dominant = standard 11-bit ID. Recessive = extended 29-bit ID follows.</td></tr>
+<tr><td>r0</td><td>1</td><td>Reserved for future use.</td></tr>
+<tr><td>DLC (data length code)</td><td>4</td><td>How many data bytes follow (0–8).</td></tr>
+<tr><td>Data</td><td>0–64</td><td>The payload, for example motor current as a 16-bit number.</td></tr>
+<tr><td>CRC + delimiter</td><td>15 + 1</td><td>Check value calculated from the frame so far. Receivers recalculate it and compare.</td></tr>
+<tr><td>ACK slot + delimiter</td><td>1 + 1</td><td>The transmitter sends recessive here. Any receiver that got the frame correctly drives it dominant. See <a href="#ack">section 7</a>.</td></tr>
+<tr><td>EOF (end of frame)</td><td>7</td><td>Seven recessive bits: "message over".</td></tr>
+<tr><td>IFS (intermission)</td><td>3</td><td>A short gap before anyone may start the next frame.</td></tr>
+</table>
+<p>Total for a frame with 8 data bytes: 1 + 11 + 1 + 1 + 1 + 4 + 64 + 16 + 2 + 7 = 108 bits, before stuff bits and the gap. At 500 kbit/s that's about 0.2 ms per message.</p>
+<h3>Check yourself</h3>
+<ol class="q"><li>A frame carries 2 data bytes. What will its DLC be, in binary?</li></ol>
+
+<h2 id="arb">6. Arbitration: two nodes talk at once</h2>
+<p class="paper"><b>In the paper:</b> §4.1 and Figs 4–5 (pp4–5). The paragraph about each node "monitoring its own transmission" is the key one.</p>
+<p>There's no master to hand out turns. A node can start a frame whenever the bus is idle, so two nodes can start on exactly the same bit. CAN sorts this out during the identifier, bit by bit, using two facts:</p>
+<ol>
+<li><b>Dominant beats recessive</b> (section 4).</li>
+<li><b>Every transmitter reads the bus back while it talks.</b> The transceiver's receiver is always connected, so the controller compares the bit it sent with the bit it sees.</li>
+</ol>
+<p>While both nodes send the same bits, nothing seems odd: the bus shows what both sent. At the first bit where they differ, one sends 0 (dominant) and the other sends 1 (recessive). The bus shows 0. The node that sent 1 reads back a 0, realises someone with a lower-numbered ID is talking, and stops transmitting and becomes a listener. The winner never notices anything happened.</p>
+
+<figure>
+<svg viewBox="0 0 680 250" role="img" aria-label="Bit-by-bit arbitration between ID 0x123 and 0x12A; they differ at bit 8 where 0x123 sends dominant and wins">
+<g text-anchor="middle">
+<text class="ts" x="170" y="40">1</text><text class="ts" x="210" y="40">2</text><text class="ts" x="250" y="40">3</text><text class="ts" x="290" y="40">4</text><text class="ts" x="330" y="40">5</text><text class="ts" x="370" y="40">6</text><text class="ts" x="410" y="40">7</text><text class="ts" x="450" y="40">8</text><text class="ts" x="490" y="40">9</text><text class="ts" x="530" y="40">10</text><text class="ts" x="570" y="40">11</text>
+</g>
+<text class="ts" x="40" y="40">ID bit</text>
+<text class="th" x="40" y="80">Node A</text><text class="ts" x="40" y="96">ID 0x123</text>
+<text class="th" x="40" y="130">Node B</text><text class="ts" x="40" y="146">ID 0x12A</text>
+<text class="th" x="40" y="185">Bus</text>
+<g id="rowA">
+<rect class="bxp" x="150" y="64" width="40" height="36"/><rect class="bxp" x="190" y="64" width="40" height="36"/><rect class="bxg" x="230" y="64" width="40" height="36"/><rect class="bxp" x="270" y="64" width="40" height="36"/><rect class="bxp" x="310" y="64" width="40" height="36"/><rect class="bxg" x="350" y="64" width="40" height="36"/><rect class="bxp" x="390" y="64" width="40" height="36"/><rect class="bxp" x="430" y="64" width="40" height="36"/><rect class="bxp" x="470" y="64" width="40" height="36"/><rect class="bxg" x="510" y="64" width="40" height="36"/><rect class="bxg" x="550" y="64" width="40" height="36"/>
+</g>
+<g text-anchor="middle"><text class="t" x="170" y="87">0</text><text class="t" x="210" y="87">0</text><text class="t" x="250" y="87">1</text><text class="t" x="290" y="87">0</text><text class="t" x="330" y="87">0</text><text class="t" x="370" y="87">1</text><text class="t" x="410" y="87">0</text><text class="t" x="450" y="87">0</text><text class="t" x="490" y="87">0</text><text class="t" x="530" y="87">1</text><text class="t" x="570" y="87">1</text></g>
+<rect class="bxp" x="150" y="114" width="40" height="36"/><rect class="bxp" x="190" y="114" width="40" height="36"/><rect class="bxg" x="230" y="114" width="40" height="36"/><rect class="bxp" x="270" y="114" width="40" height="36"/><rect class="bxp" x="310" y="114" width="40" height="36"/><rect class="bxg" x="350" y="114" width="40" height="36"/><rect class="bxp" x="390" y="114" width="40" height="36"/><rect class="bxg" x="430" y="114" width="40" height="36"/>
+<g text-anchor="middle"><text class="t" x="170" y="137">0</text><text class="t" x="210" y="137">0</text><text class="t" x="250" y="137">1</text><text class="t" x="290" y="137">0</text><text class="t" x="330" y="137">0</text><text class="t" x="370" y="137">1</text><text class="t" x="410" y="137">0</text><text class="t" x="450" y="137">1</text></g>
+<text class="ts" x="530" y="137" text-anchor="middle">stops, now listening</text>
+<rect class="bxp" x="150" y="169" width="40" height="36"/><rect class="bxp" x="190" y="169" width="40" height="36"/><rect class="bxg" x="230" y="169" width="40" height="36"/><rect class="bxp" x="270" y="169" width="40" height="36"/><rect class="bxp" x="310" y="169" width="40" height="36"/><rect class="bxg" x="350" y="169" width="40" height="36"/><rect class="bxp" x="390" y="169" width="40" height="36"/><rect class="bxp" x="430" y="169" width="40" height="36"/><rect class="bxp" x="470" y="169" width="40" height="36"/><rect class="bxg" x="510" y="169" width="40" height="36"/><rect class="bxg" x="550" y="169" width="40" height="36"/>
+<g text-anchor="middle"><text class="t" x="170" y="192">0</text><text class="t" x="210" y="192">0</text><text class="t" x="250" y="192">1</text><text class="t" x="290" y="192">0</text><text class="t" x="330" y="192">0</text><text class="t" x="370" y="192">1</text><text class="t" x="410" y="192">0</text><text class="t" x="450" y="192">0</text><text class="t" x="490" y="192">0</text><text class="t" x="530" y="192">1</text><text class="t" x="570" y="192">1</text></g>
+<rect x="428" y="58" width="44" height="152" fill="none" stroke="var(--focus)" stroke-width="2" rx="4"/>
+<text class="ts" x="450" y="232" text-anchor="middle">bit 8: A sends 0, B sends 1, bus shows 0 → B reads back a mismatch and backs off</text>
+</svg>
+<figcaption>Shaded cells are dominant (0). The bus is always the AND of what's being sent. It's identical to A's ID, so A's frame arrives intact.</figcaption>
+</figure>
+<p>This is called <b>non-destructive bitwise arbitration</b>. Read the paper's §4.1 for its definition of "non-destructive" and decide for yourself why the winner's frame isn't damaged (Q4). The loser retries automatically as soon as the bus is idle again.</p>
+<p>Design consequence: the system designer chooses IDs so that urgent messages get low numbers. The paper's example gives motor winding current a lower ID than tachometer speed.</p>
+<h3>Check yourself</h3>
+<ol class="q"><li>Node C with ID 0x0FF joins the same contest. At which bit does it diverge from A, and who wins overall?</li></ol>
+
+<h2 id="ack">7. ACK and errors</h2>
+<p class="paper"><b>In the paper:</b> the ACK bullet under Fig 2 (p3), §4.3 (p6), §4.4 (pp6–7), §4.2.3 error frame (p6). ESP-IDF: Bus Errors and Recovery.</p>
+<h3>The ACK slot</h3>
+<p>The transmitter sends a <b>recessive</b> bit in the ACK slot and reads the bus back. Every other node that received the frame <em>correctly</em> (CRC matches) drives that bit <b>dominant</b>. So:</p>
+<ul>
+<li>Bus reads dominant in the ACK slot → at least one node got the frame correctly.</li>
+<li>Bus stays recessive → nobody acknowledged. The transmitter flags an <b>ACK error</b> and, like any CAN error, automatically retransmits the frame.</li>
+</ul>
+<p>Note what ACK does <em>not</em> tell you: it doesn't say which node received it, or that the node you meant to reach did. It only says "somebody on the bus got this correctly".</p>
+<h3>The error counters</h3>
+<p>Every controller keeps two counters: the transmit error counter (TEC) and the receive error counter (REC). Errors push them up; successful frames slowly bring them down. The counters move the node between three states:</p>
+<table>
+<tr><th>State</th><th>When</th><th>Behaviour</th></tr>
+<tr><td>Error-active</td><td>TEC and REC &lt; 128</td><td>Normal. Can send loud (dominant) error frames.</td></tr>
+<tr><td>Error-passive</td><td>TEC or REC ≥ 128</td><td>Still talks, but may only flag errors quietly (recessive). Can't disrupt others.</td></tr>
+<tr><td>Bus-off</td><td>TEC &gt; 255</td><td>Disconnected from the bus. Recovery needs a long run of recessive bits (ESP-IDF: Bus Errors and Recovery).</td></tr>
+</table>
+<p>This is the paper's "fault confinement": a broken node can't hog the bus forever.</p>
+<div class="key"><p><b>For Q5:</b> picture a single ESP32 + transceiver on a bus with no other node. Use the ACK rule and the table above to predict what the transmitter experiences: what it sees in the ACK slot, what it does next, and what happens to its TEC over time. Write your prediction, then we'll test it with real hardware. There's one subtlety we'll check in the tutored session.</p></div>
+<p><b>ESP32 modes worth knowing</b> (ESP-IDF page):</p>
+<ul>
+<li><b>Self-test mode:</b> the controller doesn't require an ACK, so one node can transmit alone. Useful for a first bench test.</li>
+<li><b>Listen-only mode:</b> receives only and never drives a dominant bit, not even ACKs or error frames. This is the mode the project README requires on a car's CAN bus.</li>
+</ul>
+
+<h2 id="stuff">8. Bit stuffing (bonus question)</h2>
+<p class="paper"><b>In the paper:</b> the last paragraph of §4.4 (p6), plus the EOF bullet (p3)</p>
+<p>CAN has no separate clock wire. Receivers keep their bit timing locked by watching for <b>edges</b>, the moments the bus changes between recessive and dominant. A long run of identical bits has no edges, so a receiver's clock could drift and miscount.</p>
+<p>The rule: after <b>5 identical bits in a row</b>, the transmitter inserts one bit of the <b>opposite</b> value. Receivers know the rule and delete the stuffed bit automatically, so your code never sees it.</p>
+<figure>
+<svg viewBox="0 0 680 190" role="img" aria-label="Six zeros in a row get a stuffed one inserted after the fifth zero">
+<text class="th" x="40" y="62">Data to send</text>
+<text class="th" x="40" y="132">On the wire</text>
+<g>
+<rect class="bxg" x="170" y="40" width="40" height="36"/><rect class="bxp" x="210" y="40" width="40" height="36"/><rect class="bxp" x="250" y="40" width="40" height="36"/><rect class="bxp" x="290" y="40" width="40" height="36"/><rect class="bxp" x="330" y="40" width="40" height="36"/><rect class="bxp" x="370" y="40" width="40" height="36"/><rect class="bxp" x="410" y="40" width="40" height="36"/><rect class="bxg" x="450" y="40" width="40" height="36"/>
+</g>
+<g text-anchor="middle"><text class="t" x="190" y="63">1</text><text class="t" x="230" y="63">0</text><text class="t" x="270" y="63">0</text><text class="t" x="310" y="63">0</text><text class="t" x="350" y="63">0</text><text class="t" x="390" y="63">0</text><text class="t" x="430" y="63">0</text><text class="t" x="470" y="63">1</text></g>
+<g>
+<rect class="bxg" x="170" y="110" width="40" height="36"/><rect class="bxp" x="210" y="110" width="40" height="36"/><rect class="bxp" x="250" y="110" width="40" height="36"/><rect class="bxp" x="290" y="110" width="40" height="36"/><rect class="bxp" x="330" y="110" width="40" height="36"/><rect class="bxp" x="370" y="110" width="40" height="36"/><rect class="bxf" x="410" y="110" width="40" height="36"/><rect class="bxp" x="450" y="110" width="40" height="36"/><rect class="bxg" x="490" y="110" width="40" height="36"/>
+</g>
+<g text-anchor="middle"><text class="t" x="190" y="133">1</text><text class="t" x="230" y="133">0</text><text class="t" x="270" y="133">0</text><text class="t" x="310" y="133">0</text><text class="t" x="350" y="133">0</text><text class="t" x="390" y="133">0</text><text class="th" x="430" y="133">1</text><text class="t" x="470" y="133">0</text><text class="t" x="510" y="133">1</text></g>
+<text class="ts" x="430" y="170" text-anchor="middle">stuff bit after five 0s</text>
+</svg>
+<figcaption>Six 0s to send. After the fifth, a 1 is stuffed in; the sixth 0 follows. The run counter restarts at the stuff bit.</figcaption>
+</figure>
+<p>Stuffing has two more payoffs. Six identical bits in a row can now <em>only</em> mean something deliberate: an error frame is six dominant bits on purpose, breaking the rule so every node notices. And seven recessive bits (EOF) can only mean "frame over". Stuffing applies from SOF to the end of the CRC sequence. The fixed-format tail (CRC delimiter, ACK, EOF) isn't stuffed.</p>
+<h3>Check yourself</h3>
+<ol class="q"><li>Stuff this sequence: 1 1 1 1 1 1 1 1 0. How many bits go on the wire?</li></ol>
+
+<h2 id="esp">9. Your ESP32 hardware</h2>
+<p class="paper"><b>In ESP-IDF:</b> Overview; Getting Started → Hardware Connection. <b>In the paper:</b> §5 first paragraph and Fig 6 (p7). It even uses the SN65HVD230 as its example transceiver.</p>
+<ul>
+<li>The ESP32 contains a CAN <em>controller</em> (TWAI) but <b>no transceiver</b>. The ESP-IDF page states this explicitly, which is why you bought the SN65HVD230 module.</li>
+<li>The controller talks to the transceiver through two logic signals: <b>TWAI TX</b> (ESP32 → transceiver driver input, often labelled CTX or D on modules) and <b>TWAI RX</b> (transceiver receiver output → ESP32, labelled CRX or R).</li>
+<li>Which GPIOs carry TX and RX isn't fixed: you choose them in software when you configure the TWAI node. The ESP32 can route the signals to most GPIOs.</li>
+<li>The module also needs 3V3 and GND from the ESP32, and its CANH/CANL pins go to the bus.</li>
+<li>For a one-board test, ESP-IDF suggests connecting TX directly to RX (no transceiver) and using self-test mode.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 680 210" role="img" aria-label="ESP32 connected to SN65HVD230 module via TX, RX, 3V3 and GND; module connects to CANH and CANL">
+<rect class="bxp" x="60" y="40" width="170" height="130" rx="8"/><text class="th" x="145" y="64" text-anchor="middle">ESP32</text><text class="ts" x="145" y="82" text-anchor="middle">TWAI controller</text>
+<rect class="bxt" x="370" y="40" width="170" height="130" rx="8"/><text class="th" x="455" y="64" text-anchor="middle">SN65HVD230</text><text class="ts" x="455" y="82" text-anchor="middle">transceiver module</text>
+<g class="ln" stroke-width="1.2">
+<path d="M230 100H366M360 96L367 100L360 104"/>
+<path d="M370 122H234M240 118L233 122L240 126"/>
+<path d="M230 144H370"/><path d="M230 162H370"/>
+<path d="M540 100H600"/><path d="M540 140H600"/>
+</g>
+<text class="ts" x="238" y="94">TX GPIO (your choice)</text><text class="ts" x="362" y="94" text-anchor="end">CTX</text>
+<text class="ts" x="238" y="116">RX GPIO (your choice)</text><text class="ts" x="362" y="116" text-anchor="end">CRX</text>
+<text class="ts" x="238" y="140">3V3</text><text class="ts" x="238" y="158">GND</text>
+<text class="th" x="606" y="104" fill="var(--h)">CANH</text><text class="th" x="606" y="144">CANL</text>
+<text class="ts" x="340" y="195" text-anchor="middle">Pin labels vary by module; check the silkscreen on yours.</text>
+</svg>
+<figcaption>Logic side on the left (3.3 V signals), bus side on the right.</figcaption>
+</figure>
+<div class="key"><p><b>Check your modules when they arrive:</b> many cheap SN65HVD230 breakout boards already have a 120 Ω resistor soldered between CANH and CANL. With two such boards at the two ends of a short bus, that's exactly the right termination. Add a third board in the middle and you'd have an extra terminator. Measure with the borrowed multimeter (power off) and compare with your answer to Q2.</p></div>
+
+<h2 id="qmap">10. Where each notes.md question is covered</h2>
+<table>
+<tr><th>Q</th><th>Topic</th><th>This guide</th><th>Paper / ESP-IDF</th></tr>
+<tr><td>1</td><td>CAN-H/CAN-L states; differential noise</td><td>§4</td><td>§5 p7, Fig 7 p8, §5.1.4 p11</td></tr>
+<tr><td>2</td><td>120 Ω terminators; measured resistance</td><td>§3, §9 tip</td><td>§5 p7</td></tr>
+<tr><td>3</td><td>Frame sketch; priority field</td><td>§5</td><td>§3.1.1 Fig 2 p3</td></tr>
+<tr><td>4</td><td>Arbitration; why loser doesn't corrupt</td><td>§6</td><td>§4.1 Figs 4–5 pp4–5</td></tr>
+<tr><td>5</td><td>ACK slot; lone transmitter</td><td>§7</td><td>p3 ACK bullet, §4.4 pp6–7; ESP-IDF Bus Errors</td></tr>
+<tr><td>6</td><td>Controller vs transceiver; ESP32 pins</td><td>§2, §9</td><td>§2 Fig 1, §5 Fig 6; ESP-IDF Hardware Connection</td></tr>
+<tr><td>Bonus</td><td>Bit stuffing</td><td>§8</td><td>§4.4 last paragraph p6</td></tr>
+</table>
+
+<h2 id="gloss">11. Glossary</h2>
+<table>
+<tr><td><b>Node</b></td><td>Any device on the bus (controller + transceiver + its microcontroller).</td></tr>
+<tr><td><b>Recessive / dominant</b></td><td>Bus logic 1 (idle, nobody driving) / bus logic 0 (actively driven; always wins).</td></tr>
+<tr><td><b>Differential</b></td><td>Information carried in the <em>difference</em> between two wires, not in either wire's voltage.</td></tr>
+<tr><td><b>Common-mode</b></td><td>Anything that's the same on both wires, such as noise or ground offset. A differential receiver rejects it.</td></tr>
+<tr><td><b>Characteristic impedance Z<sub>0</sub></b></td><td>The V/I ratio a travelling wave sees on a cable; 120 Ω for CAN twisted pair.</td></tr>
+<tr><td><b>Termination</b></td><td>A resistor equal to Z<sub>0</sub> at each end to stop reflections.</td></tr>
+<tr><td><b>Stub</b></td><td>The short branch from the main bus to a node. Keep it ≤ 0.3 m.</td></tr>
+<tr><td><b>Identifier (ID)</b></td><td>11-bit label for what a message is; also its priority (lower = more urgent).</td></tr>
+<tr><td><b>Arbitration</b></td><td>Deciding who transmits when several start together; bitwise and non-destructive in CAN.</td></tr>
+<tr><td><b>CRC</b></td><td>Cyclic redundancy check: a 15-bit check value that detects corrupted bits.</td></tr>
+<tr><td><b>ACK</b></td><td>Acknowledge slot: receivers overwrite the transmitter's recessive bit with dominant.</td></tr>
+<tr><td><b>TEC / REC</b></td><td>Transmit / receive error counters; they set error-active, error-passive or bus-off.</td></tr>
+<tr><td><b>Bit stuffing</b></td><td>Inserting an opposite bit after 5 identical ones so receivers stay in sync.</td></tr>
+<tr><td><b>TWAI</b></td><td>Espressif's name for the CAN controller inside the ESP32.</td></tr>
+<tr><td><b>Transceiver</b></td><td>Chip converting logic TX/RX to bus CANH/CANL and back (here the SN65HVD230).</td></tr>
+</table>
+
+<p class="paper" style="margin-top:32px">Sources: S. Corrigan, <em>Introduction to the Controller Area Network (CAN)</em>, TI SLOA101B (rev. May 2016); Espressif ESP-IDF Programming Guide, TWAI page (stable). Error-counter thresholds and the 3-bit intermission follow ISO 11898-1. Explanations are written for this programme; the paper remains the reference.</p>
+</main>
+</body>
+</html>

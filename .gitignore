@@ -1,0 +1,25 @@
+# KiCad: local file history (its own hidden Git repo), lock files, backups
+.history/
+*.lck
+~*.lck
+*-backups/
+fp-info-cache
+_autosave-*
+*.bak
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# PlatformIO / Arduino build output
+.pio/
+build/
+
+# Windows / editor clutter
+Thumbs.db
+desktop.ini
+.vscode/
+
+# Private: may show a delivery address or order details
+hardware/photos/*delivery-note*
