@@ -66,3 +66,42 @@ The resistance is about 60 Ω, as I have two 120 Ω resistors connected in paral
 ### What's next
 
 Termination simulation (Falstad/LTspice), then wire the bus on the breadboard and run firmware v1.
+
+---
+
+## Entry 3 — 2026-11-22: termination simulation (Falstad)
+
+**Goal:** before touching the bench, predict what a fast edge does on a 120 Ω line with different terminations, then check the predictions in a simulator.
+
+### Set-up
+
+Falstad circuit simulator, starting from its "Termination" example (Circuits ▸ Transmission Lines). Four identical lossless lines, Z0 = 120 Ω, one-way delay Td = 10 ns, each driven through Rs = 120 Ω by a 0 → 2 V pulse (10 MHz). Only the far-end load changes: 120 Ω, open (1 GΩ), 60 Ω, 1 kΩ. A scope on each load and a voltmeter probe at the near end (node A) of the open line.
+
+Model limits: ideal lossless line, perfectly sharp edges. A real twisted pair has losses, and the SN65HVD230 has slower edges, so real reflections are smaller and rounder.
+
+### Predictions (worked by hand first)
+
+Formulas used: V⁺ = Vs·Z0/(Rs + Z0) = 1 V; Γ_L = (RL − Z0)/(RL + Z0); v_end = V⁺(1 + Γ_L).
+
+| Load RL | Γ_L | Predicted far-end voltage | Simulated | Match |
+|---|---|---|---|---|
+| 120 Ω | 0 | 1.0 V | 1 V | ✔ |
+| open (1 GΩ) | +1 | 2.0 V | 2 V | ✔ |
+| 60 Ω | −1/3 | 0.667 V | 666.667 mV | ✔ |
+| 1 kΩ | 11/14 | 1.786 V | 1.786 V | ✔ |
+
+Check: with Rs = Z0, v_end = Vs·RL/(RL + Z0), the plain DC divider, so each answer agrees with the DC value.
+
+Screenshot: [termination sim, 3 ns pulses](../design/2026-11-22_termination-sim-falstad-3ns-pulse.png)
+
+### What I saw at the near end (open line)
+
+The voltage spiked twice at 1 V with a 2Td = 20 ns time gap. The 3 ns long pulse had finished, so node A was back to 0 V long before the echo returns. The two never overlap, so the max voltage can never be 2 V. The wave is absorbed at Rs, and therefore the voltage does not spike a third time.
+
+### What went wrong / what I learned
+
+Source voltage was 0 to 5 V instead of 0 to 2 V, giving me 2.5× my predictions. Changed the source voltage to 0 to 2 V.
+
+### Prediction for the bench (break-it experiment 6)
+
+One bit at 500 kbit/s lasts 2000 ns (1/(500 × 10³) s = 2 µs). A round trip on my 1 m twisted pair is about 10 ns, so a bit is about 200 times longer than a round trip. The echo comes back and is absorbed within the first 1% of the bit. The receiver doesn't sample until well into the bit, so the round trip has already been completed and the receiver reads nothing from the echo. Because the receiver doesn't receive it, the echo doesn't change any bit to dominant, so I predict frames and ACKs will still get through with one terminator removed. I won't be able to see the reflections themselves without an oscilloscope on CAN-H/CAN-L.
