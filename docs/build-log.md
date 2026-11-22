@@ -35,3 +35,34 @@ CAN-L stay within the voltage range each transceiver can read.
 ### What I'd do differently / what's next
 
 Next: draw the v5 sketch as a KiCad schematic (done 2026-11-22), then wire everything up on a breadboard.
+
+---
+
+## Entry 2 — 2026-11-22: KiCad schematic + termination resistance checks
+
+**Goal:** draw the v5 sketch in KiCad, then check the termination resistance with a multimeter before wiring anything to power.
+
+### Schematic
+
+KiCad 10 schematic of the bench bus (2 × ESP32-WROOM-32, 2 × SN65HVD230, 120 Ω at each end of the bus).
+ERC 0 errors / 0 warnings. Title block filled in (rev A, 2026-11-22). Plots: [PDF](../design/can_bench_bus.pdf) · [SVG](../design/can_bench_bus.svg).
+
+### Resistance checks (unpowered)
+
+| Measurement | Meter reading | True resistance (reading − 0.4 Ω leads) | Photo |
+|---|---|---|---|
+| Probes shorted together (lead resistance) | 0.4 Ω | — | [photo](../hardware/photos/2026-11-22_meter-lead-check-0.4ohm.jpg) |
+| CAN-H to CAN-L, one board (one terminator) | 120.2 Ω | 119.8 Ω | [photo](../hardware/photos/2026-11-22_single-board-120.2ohm.jpg) |
+| CAN-H to CAN-L, bus with both terminators | 60.2 Ω | 59.8 Ω | [photo](../hardware/photos/2026-11-22_bus-both-terminators-60.2ohm.jpg) |
+
+I measured the resistance of the multimeter leads by touching the probes together, then measured the
+resistance across the CAN bus with one resistor connected and with two resistors connected. Subtracting
+the lead resistance from each reading gives the true resistance.
+
+### Why about 60 Ω
+
+The resistance is about 60 Ω, as I have two 120 Ω resistors connected in parallel.
+
+### What's next
+
+Termination simulation (Falstad/LTspice), then wire the bus on the breadboard and run firmware v1.

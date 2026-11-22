@@ -37,7 +37,7 @@ decodes traffic from the car's OBD-II port, with data plotted in Python.
 | # | Milestone | Target | Status |
 |---|---|---|---|
 | M1 | Parts ordered; CAN physical layer + frame format study (EMC0 L5 tie-in) | 2026-11-22 | ✅ ordered 2026-11-18, read-up + parts arrived 2026-11-20 (TVS to follow) |
-| M2 | Bench bus: two ESP32s, frames both ways, logic-analyser trace; GitHub repo + build log started, KiCad bench schematic, termination simulation | 2026-12-06 | 🟨 KiCad schematic done 2026-11-22 (ERC 0/0, PDF + SVG in design/); bench 60 Ω check done 2026-11-22 |
+| M2 | Bench bus: two ESP32s, frames both ways, logic-analyser trace; GitHub repo + build log started, KiCad bench schematic, termination simulation | 2026-12-06 | 🟨 KiCad schematic done 2026-11-22 (ERC 0/0, PDF + SVG in design/); bench 60 Ω check done 2026-11-22; GitHub repo + build log entry 1 2026-11-22 |
 | M3 | Power stage built and tested on the bench PSU at 12–14.4 V (current-limited) | 2026-12-13 | ⬜ |
 | M4 | Car: listen-only logging, bit rate found, frames captured | 2026-12-31 | ⬜ |
 | M5 | Python decoding + plots; full schematic (power stage, car node); repo README polish | 2027-01-17 | ⬜ |
